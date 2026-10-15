@@ -7,3 +7,34 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+:root {
+    color-scheme: light;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    @apply bg-slate-100 text-slate-900 antialiased;
+    font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+@layer components {
+    .app-shell {
+        @apply min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.14),transparent_35%),linear-gradient(135deg,#f8fbff_0%,#eef4ff_30%,#f8fafc_100%)];
+    }
+
+    .panel-surface {
+        @apply rounded-2xl border border-slate-200 bg-white/90 shadow-[0_14px_45px_rgba(15,23,42,0.08)] backdrop-blur-sm;
+    }
+}
+
+::selection {
+    background: rgba(59, 130, 246, 0.2);
+}
