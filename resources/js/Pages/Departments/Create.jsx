@@ -95,14 +95,8 @@ export default function Create() {
                                 </Button>
                             </Link>
 
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                disabled={processing}
-                            >
-                                {processing
-                                    ? 'Creating...'
-                                    : 'Create Department'}
+                            <Button type="submit" variant="primary" disabled={processing} className="!w-auto px-3 py-1.5 text-sm">
+                                    {processing ? 'Creating...' : 'Create Department'}
                             </Button>
                         </div>
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
@@ -288,18 +289,18 @@ class EmployeeController extends Controller
     /**
      * Show the employee profile completion form.
      */
-    public function createProfile(Request $request): Response
+   public function createProfile(Request $request): Response
     {
+        $departments = Department::orderBy('name')
+            ->get(['id', 'name']);
+
         $positions = Position::with('department')
             ->orderBy('name')
-            ->get([
-                'id',
-                'department_id',
-                'name',
-            ]);
+            ->get(['id', 'department_id', 'name']);
 
         return Inertia::render('CompleteProfile', [
             'user' => $request->user(),
+            'departments' => $departments,
             'positions' => $positions,
         ]);
     }

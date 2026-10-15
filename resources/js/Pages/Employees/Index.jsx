@@ -1,13 +1,14 @@
+
 import { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
 
 import DashboardLayout from '../../Layouts/DashboardLayout';
 import Button from '../../Components/Button';
+import SearchBar from '../../Components/SearchBar';
+import DataTable from '../../Components/DataTable';
+import StatusBadge from '../../Components/StatusBadge';
 
-export default function Index({
-    employees = [],
-    status = 'active',
-}) {
+export default function Index({ employees = [], status = 'active' }) {
     const [search, setSearch] = useState('');
 
     const filteredEmployees = employees.filter((employee) => {
@@ -19,31 +20,30 @@ export default function Index({
             .filter(Boolean)
             .join(' ');
 
-        const searchableText = `
-            ${fullName}
-            ${employee.employee_id ?? ''}
-            ${employee.user?.email ?? ''}
-            ${employee.phone ?? ''}
-            ${employee.position?.name ?? ''}
-            ${employee.position?.department?.name ?? ''}
-        `.toLowerCase();
+        const searchableText = [
+            fullName,
+            employee.employee_id,
+            employee.user?.email,
+            employee.phone,
+            employee.position?.name,
+            employee.position?.department?.name,
+        ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
 
-        return searchableText.includes(search.toLowerCase());
+        return searchableText.includes(search.toLowerCase().trim());
     });
 
-    const deleteEmployee = (employee) => {
-        const fullName = [
+    const deactivateEmployee = (employee) => {
+        const name = [
             employee.user?.first_name,
             employee.user?.last_name,
         ]
             .filter(Boolean)
             .join(' ');
 
-        if (
-            confirm(
-                `Are you sure you want to deactivate ${fullName}?`
-            )
-        ) {
+        if (window.confirm(`Are you sure you want to deactivate ${name || 'this employee'}?`)) {
             router.delete(`/employees/${employee.id}`, {
                 preserveScroll: true,
             });
@@ -51,44 +51,179 @@ export default function Index({
     };
 
     const reactivateEmployee = (employee) => {
-        if (!confirm(`Are you sure you want to reactivate ${employee.user?.first_name ?? 'this employee'}?`)) {
-            return;
-        }
+        const name = employee.user?.first_name || 'this employee';
 
-        router.patch(`/employees/${employee.id}/status`, {
-            status: 'active',
-        });
+        if (window.confirm(`Are you sure you want to reactivate ${name}?`)) {
+            router.patch(
+                `/employees/${employee.id}/status`,
+                { status: 'active' },
+                { preserveScroll: true }
+            );
+        }
     };
+
+    const columns = [
+        {
+            key: 'employee',
+            label: 'Employee',
+            render: (employee) => {
+                const fullName = [
+                    employee.user?.first_name,
+                    employee.user?.middle_name,
+                    employee.user?.last_name,
+                ]
+                    .filter(Boolean)
+                    .join(' ');
+
+                return (
+                    <div className="min-w-40">
+                        <p className="font-semibold text-gray-800">
+                            {fullName || 'Unnamed Employee'}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                            {employee.user?.email || 'No email'}
+                        </p>
+                    </div>
+                );
+            },
+        },
+        {
+            key: 'employee_id',
+            label: 'Employee ID',
+            render: (employee) => (
+                <span className="whitespace-nowrap font-medium text-gray-600">
+                    {employee.employee_id || '—'}
+                </span>
+            ),
+        },
+        {
+            key: 'position',
+            label: 'Position',
+            render: (employee) => employee.position?.name || 'No position',
+        },
+        {
+            key: 'department',
+            label: 'Department',
+            render: (employee) =>
+                employee.position?.department?.name || 'No department',
+        },
+        {
+            key: 'hire_date',
+            label: 'Hire Date',
+            render: (employee) => {
+                const hireDate = employee.hire_date;
+
+                if (!hireDate) {
+                    return (
+                        <span className="whitespace-nowrap">
+                            Not specified
+                        </span>
+                    );
+                }
+
+                const date = new Date(hireDate);
+
+                return (
+                    <span className="whitespace-nowrap">
+                        {Number.isNaN(date.getTime())
+                            ? 'Invalid Date'
+                            : date.toLocaleDateString('en-PH', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                            })}
+                    </span>
+                );
+            },
+        },
+        {
+            key: 'status',
+            label: 'Status',
+            render: (employee) => <StatusBadge status={employee.status} />,
+        },
+        {
+            key: 'actions',
+            label: 'Actions',
+            render: (employee) => (
+                <div className="flex min-w-max items-center gap-2">
+                    <Link
+                        href={`/employees/${employee.id}`}
+                        className="inline-flex"
+                    >
+                        <Button
+                            variant="secondary"
+                            className="whitespace-nowrap px-3 py-2"
+                        >
+                            View
+                        </Button>
+                    </Link>
+
+                    <Link
+                        href={`/employees/${employee.id}/edit`}
+                        className="inline-flex"
+                    >
+                        <Button
+                            variant="primary"
+                            className="whitespace-nowrap px-3 py-2"
+                        >
+                            Edit
+                        </Button>
+                    </Link>
+
+                   {employee.status === 'active' ? (
+                        <Button
+                            variant="danger"
+                            onClick={() => deactivateEmployee(employee)}
+                            className="!w-auto shrink-0 whitespace-nowrap px-2.5 py-1.5 text-xs"
+                        >
+                            Deactivate
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="primary"
+                            onClick={() => reactivateEmployee(employee)}
+                            className="!w-auto shrink-0 whitespace-nowrap px-3 py-2"
+                        >
+                            Reactivate
+                        </Button>
+                    )}
+                </div>
+            ),
+        },
+    ];
+
     return (
         <DashboardLayout>
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">
+                        <p className="text-sm font-medium text-blue-600">
+                            Employee Management
+                        </p>
+                        <h1 className="mt-1 text-3xl font-bold tracking-tight text-gray-900">
                             Employees
                         </h1>
-
-                        <p className="mt-1 text-gray-600">
+                        <p className="mt-2 text-sm text-gray-500">
                             Manage employee records and employment information.
                         </p>
                     </div>
 
-                    <Link href="/employees/create">
-                        <Button variant="primary">
+                    <Link href="/employees/create" className="inline-flex self-start">
+                        <Button className="whitespace-nowrap">
                             + Add Employee
                         </Button>
                     </Link>
                 </div>
 
-                {/* Status Filter */}
-                <div className="flex flex-col gap-4 sm:flex-row">
+                {/* Status Filters */}
+                <div className="flex flex-wrap gap-2">
                     <Link
                         href="/employees?status=active"
-                        className={`rounded-lg px-4 py-2 text-sm font-medium ${
+                        className={`inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                             status === 'active'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                         }`}
                     >
                         Active Employees
@@ -96,10 +231,10 @@ export default function Index({
 
                     <Link
                         href="/employees?status=inactive"
-                        className={`rounded-lg px-4 py-2 text-sm font-medium ${
+                        className={`inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
                             status === 'inactive'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                         }`}
                     >
                         Inactive Employees
@@ -107,175 +242,46 @@ export default function Index({
                 </div>
 
                 {/* Search */}
-                <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <label
-                        htmlFor="search"
-                        className="mb-2 block text-sm font-medium text-gray-700"
-                    >
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <label className="mb-2 block text-sm font-semibold text-gray-700">
                         Search Employees
                     </label>
-
-                    <input
-                        id="search"
-                        type="text"
+                    <SearchBar
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search by name, employee ID, position, or department..."
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                        onChange={(value) =>
+                            setSearch(
+                                typeof value === 'string'
+                                    ? value
+                                    : value.target.value
+                            )
+                        }
+                        placeholder="Search by name, ID, email, position, or department..."
                     />
                 </div>
 
-                {/* Employee List */}
-                <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                    <div className="border-b border-gray-200 px-6 py-4">
-                        <h2 className="text-lg font-semibold text-gray-800">
-                            {status === 'active'
-                                ? 'Active Employees'
-                                : 'Inactive Employees'}
-                        </h2>
-
-                        <p className="mt-1 text-sm text-gray-500">
-                            {filteredEmployees.length} employee
-                            {filteredEmployees.length !== 1 ? 's' : ''} found
-                        </p>
+                {/* Employee Table */}
+                <section className="space-y-4">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900">
+                                {status === 'active'
+                                    ? 'Active Employees'
+                                    : 'Inactive Employees'}
+                            </h2>
+                            <p className="mt-1 text-sm text-gray-500">
+                                Showing {filteredEmployees.length} employee
+                                {filteredEmployees.length !== 1 ? 's' : ''}
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="border-b bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700">
-                                        Employee
-                                    </th>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700">
-                                        Employee ID
-                                    </th>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700">
-                                        Position
-                                    </th>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700">
-                                        Department
-                                    </th>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700">
-                                        Hire Date
-                                    </th>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                {filteredEmployees.length > 0 ? (
-                                    filteredEmployees.map((employee) => {
-                                        const fullName = [
-                                            employee.user?.first_name,
-                                            employee.user?.middle_name,
-                                            employee.user?.last_name,
-                                        ]
-                                            .filter(Boolean)
-                                            .join(' ');
-
-                                        return (
-                                            <tr
-                                                key={employee.id}
-                                                className="border-b last:border-b-0 hover:bg-gray-50"
-                                            >
-                                                {/* Employee */}
-                                                <td className="px-6 py-4">
-                                                    <p className="font-medium text-gray-800">
-                                                        {fullName || 'Unnamed Employee'}
-                                                    </p>
-
-                                                    <p className="text-sm text-gray-500">
-                                                        {employee.user?.email ||
-                                                            'No email'}
-                                                    </p>
-                                                </td>
-
-                                                {/* Employee ID */}
-                                                <td className="px-6 py-4 text-gray-600">
-                                                    {employee.employee_id}
-                                                </td>
-
-                                                {/* Position */}
-                                                <td className="px-6 py-4 text-gray-600">
-                                                    {employee.position?.name ||
-                                                        'No position'}
-                                                </td>
-
-                                                {/* Department */}
-                                                <td className="px-6 py-4 text-gray-600">
-                                                    {employee.position?.department
-                                                        ?.name ||
-                                                        'No department'}
-                                                </td>
-
-                                                {/* Hire Date */}
-                                                <td className="px-6 py-4 text-gray-600">
-                                                    {employee.hire_date
-                                                        ? new Date(
-                                                              employee.hire_date
-                                                          ).toLocaleDateString()
-                                                        : 'Not specified'}
-                                                </td>
-
-                                               {/* Actions */}
-                                                <td className="px-6 py-4">
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <Link href={`/employees/${employee.id}`}>
-                                                            <Button variant="secondary">
-                                                                View
-                                                            </Button>
-                                                        </Link>
-
-                                                        <Link href={`/employees/${employee.id}/edit`}>
-                                                            <Button variant="primary">
-                                                                Edit
-                                                            </Button>
-                                                        </Link>
-
-                                                        {employee.status === 'active' ? (
-                                                            <Button
-                                                                variant="danger"
-                                                                onClick={() => deleteEmployee(employee)}
-                                                            >
-                                                                Deactivate
-                                                            </Button>
-                                                        ) : (
-                                                            <Button
-                                                                variant="primary"
-                                                                onClick={() => reactivateEmployee(employee)}
-                                                            >
-                                                                Reactivate
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                ) : (
-                                    <tr>
-                                        <td
-                                            colSpan="6"
-                                            className="px-6 py-10 text-center text-gray-500"
-                                        >
-                                            No employees found.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    <DataTable
+                        columns={columns}
+                        data={filteredEmployees}
+                        emptyMessage="No employees match your search."
+                    />
+                </section>
             </div>
         </DashboardLayout>
     );
 }
-

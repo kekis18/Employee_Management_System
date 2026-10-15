@@ -1,12 +1,12 @@
+
 import { useForm } from '@inertiajs/react';
-import DashboardLayout from '../Layouts/DashboardLayout';
 import Input from '../Components/Input';
 import Button from '../Components/Button';
 
 export default function CompleteProfile({
     user,
-    departments,
-    positions,
+    departments = [],
+    positions = [],
 }) {
     const { data, setData, post, processing, errors } = useForm({
         first_name: '',
@@ -23,111 +23,222 @@ export default function CompleteProfile({
         post('/employee-profile');
     };
 
+    const selectClass = (field) =>
+        [
+            'w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 outline-none transition',
+            errors[field]
+                ? 'border-red-300 focus:ring-2 focus:ring-red-100'
+                : 'border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100',
+        ].join(' ');
+
+    const filteredPositions = positions.filter(
+        (position) =>
+            String(position.department_id) ===
+            String(data.department_id)
+    );
+
     return (
-        <DashboardLayout>
-            <div className="space-y-6">
-                <div className="panel-surface p-6 sm:p-8">
-                    <div className="mb-8">
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Profile Setup</p>
-                        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-                            Complete Your Employee Profile
-                        </h1>
+        <div className="min-h-screen bg-gray-50 px-4 py-8 sm:px-6 lg:py-12">
+            <div className="mx-auto max-w-3xl">
+                {/* Page Header */}
+                <div className="mb-6">
+                    <p className="text-sm font-semibold text-blue-600">
+                        Employee Management System
+                    </p>
 
-                        <p className="mt-3 text-slate-600">
-                            Welcome, {user.name}. Please provide your employee information to continue.
-                        </p>
+                    <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+                        Complete Your Profile
+                    </h1>
 
-                        <p className="mt-1 text-sm text-slate-500">
-                            Account email: {user.email}
+                    <p className="mt-2 text-sm text-gray-500">
+                        Provide your employee information to finish setting
+                        up your account.
+                    </p>
+                </div>
+
+                {/* Profile Form */}
+                <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div className="border-b border-gray-200 px-6 py-5 sm:px-8">
+                        <h2 className="text-lg font-semibold text-gray-800">
+                            Employee Information
+                        </h2>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                            Account: {user?.email}
                         </p>
                     </div>
 
-                    <form onSubmit={submit}>
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
-                            <h2 className="text-lg font-semibold text-slate-900">Employee Information</h2>
-                            <p className="mt-1 text-sm text-slate-500">Enter your employment details below.</p>
-                        </div>
-
-                        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <form onSubmit={submit} className="p-6 sm:p-8">
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            {/* First Name */}
                             <Input
-                                label="Phone Number"
-                                value={data.phone}
-                                onChange={(e) => setData('phone', e.target.value)}
-                                placeholder="Enter phone number"
-                                error={errors.phone}
-                                name="phone"
+                                label="First Name"
+                                name="first_name"
+                                placeholder="Enter first name"
+                                value={data.first_name}
+                                onChange={(e) =>
+                                    setData('first_name', e.target.value)
+                                }
+                                error={errors.first_name}
+                                required
                             />
 
+                            {/* Middle Name */}
+                            <Input
+                                label="Middle Name (Optional)"
+                                name="middle_name"
+                                placeholder="Enter middle name"
+                                value={data.middle_name}
+                                onChange={(e) =>
+                                    setData('middle_name', e.target.value)
+                                }
+                                error={errors.middle_name}
+                            />
+
+                            {/* Last Name */}
+                            <Input
+                                label="Last Name"
+                                name="last_name"
+                                placeholder="Enter last name"
+                                value={data.last_name}
+                                onChange={(e) =>
+                                    setData('last_name', e.target.value)
+                                }
+                                error={errors.last_name}
+                                required
+                            />
+
+                            {/* Phone */}
+                            <Input
+                                label="Phone Number"
+                                name="phone"
+                                placeholder="Enter phone number"
+                                value={data.phone}
+                                onChange={(e) =>
+                                    setData('phone', e.target.value)
+                                }
+                                error={errors.phone}
+                            />
+
+                            {/* Department */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-slate-700">Department</label>
-                                <select
-                                    value={data.department_id}
-                                    onChange={(e) => setData('department_id', e.target.value)}
-                                    className={[
-                                        'w-full rounded-xl border bg-slate-50/80 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition',
-                                        errors.department_id
-                                            ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-4 focus:ring-red-100'
-                                            : 'border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100',
-                                    ].join(' ')}
+                                <label
+                                    htmlFor="department_id"
+                                    className="mb-2 block text-sm font-medium text-gray-700"
                                 >
-                                    <option value="">Select Department</option>
+                                    Department
+                                </label>
+
+                                <select
+                                    id="department_id"
+                                    name="department_id"
+                                    value={data.department_id}
+                                    onChange={(e) => {
+                                        setData('department_id', e.target.value);
+                                        setData('position_id', '');
+                                    }}
+                                    className={selectClass('department_id')}
+                                    required
+                                >
+                                    <option value="">
+                                        Select Department
+                                    </option>
+
                                     {departments.map((department) => (
-                                        <option key={department.id} value={department.id}>
+                                        <option
+                                            key={department.id}
+                                            value={department.id}
+                                        >
                                             {department.name}
                                         </option>
                                     ))}
                                 </select>
 
                                 {errors.department_id && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.department_id}</p>
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.department_id}
+                                    </p>
                                 )}
                             </div>
 
-                            <div>
-                                <label className="mb-2 block text-sm font-medium text-slate-700">Position</label>
-                                <select
-                                    value={data.position_id}
-                                    onChange={(e) => setData('position_id', e.target.value)}
-                                    className={[
-                                        'w-full rounded-xl border bg-slate-50/80 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition',
-                                        errors.position_id
-                                            ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-4 focus:ring-red-100'
-                                            : 'border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100',
-                                    ].join(' ')}
-                                >
-                                    <option value="">Select Position</option>
-                                    {positions.map((position) => (
-                                        <option key={position.id} value={position.id}>
-                                            {position.name}
+                            {/* Position: visible only after selecting a department */}
+                            {data.department_id && (
+                                <div>
+                                    <label
+                                        htmlFor="position_id"
+                                        className="mb-2 block text-sm font-medium text-gray-700"
+                                    >
+                                        Position
+                                    </label>
+
+                                    <select
+                                        id="position_id"
+                                        name="position_id"
+                                        value={data.position_id}
+                                        onChange={(e) =>
+                                            setData('position_id', e.target.value)
+                                        }
+                                        className={selectClass('position_id')}
+                                        required
+                                    >
+                                        <option value="">
+                                            Select Position
                                         </option>
-                                    ))}
-                                </select>
 
-                                {errors.position_id && (
-                                    <p className="mt-1.5 text-sm text-red-600">{errors.position_id}</p>
-                                )}
+                                        {filteredPositions.map((position) => (
+                                            <option
+                                                key={position.id}
+                                                value={position.id}
+                                            >
+                                                {position.name}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    {filteredPositions.length === 0 && (
+                                        <p className="mt-1 text-sm text-gray-500">
+                                            No positions available for this department.
+                                        </p>
+                                    )}
+
+                                    {errors.position_id && (
+                                        <p className="mt-1 text-sm text-red-600">
+                                            {errors.position_id}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Hire Date */}
+                            <div className="sm:col-span-2">
+                                <Input
+                                    label="Hire Date"
+                                    type="date"
+                                    name="hire_date"
+                                    value={data.hire_date}
+                                    onChange={(e) =>
+                                        setData('hire_date', e.target.value)
+                                    }
+                                    error={errors.hire_date}
+                                    required
+                                />
                             </div>
-
-                            <Input
-                                label="Hire Date"
-                                type="date"
-                                value={data.hire_date}
-                                onChange={(e) => setData('hire_date', e.target.value)}
-                                error={errors.hire_date}
-                                name="hire_date"
-                            />
                         </div>
 
-                        <div className="mt-8 flex justify-end border-t border-slate-200 pt-6">
-                            <div className="w-full max-w-xs">
-                                <Button type="submit" variant="primary" disabled={processing}>
-                                    {processing ? 'Saving...' : 'Save Profile'}
-                                </Button>
-                            </div>
+                        {/* Submit */}
+                        <div className="mt-8 flex justify-end border-t border-gray-200 pt-6">
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                disabled={processing}
+                                className="!w-auto px-4 py-2 text-sm"
+                            >
+                                {processing ? 'Saving...' : 'Save Profile'}
+                            </Button>
                         </div>
                     </form>
                 </div>
             </div>
-        </DashboardLayout>
+        </div>
     );
 }

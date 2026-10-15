@@ -242,10 +242,9 @@ export default function Edit({ employee, positions = [] }) {
                                 type="submit"
                                 variant="primary"
                                 disabled={processing}
+                                className="!w-auto px-3 py-1.5 text-sm"
                             >
-                                {processing
-                                    ? 'Updating...'
-                                    : 'Update Employee'}
+                                {processing ? 'Updating...' : 'Update Employee'}
                             </Button>
                         </div>
                     </form>

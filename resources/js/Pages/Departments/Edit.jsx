@@ -95,14 +95,8 @@ export default function Edit({ department }) {
                                 </Button>
                             </Link>
 
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                disabled={processing}
-                            >
-                                {processing
-                                    ? 'Updating...'
-                                    : 'Update Department'}
+                            <Button type="submit" variant="primary" disabled={processing} className="!w-auto px-3 py-1.5 text-sm">
+                                {processing ? 'Updating...' : 'Update Department'}
                             </Button>
                         </div>
 

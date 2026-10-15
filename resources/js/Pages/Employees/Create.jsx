@@ -260,14 +260,8 @@ export default function Create({ positions = [] }) {
                                 </Button>
                             </Link>
 
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                disabled={processing}
-                            >
-                                {processing
-                                    ? 'Creating...'
-                                    : 'Create Employee'}
+                            <Button type="submit" variant="primary" disabled={processing} className="!w-auto px-3 py-1.5 text-sm">
+                                {processing ? 'Creating...' : 'Create Employee'}
                             </Button>
                         </div>
                     </form>
